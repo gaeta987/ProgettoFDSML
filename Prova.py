@@ -1,10 +1,8 @@
-import numpy as np # linear algebra
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.utils import resample
 from keras.utils.np_utils import to_categorical
@@ -12,6 +10,7 @@ from keras.layers import Convolution1D, MaxPool1D, Dense, Input, Flatten
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
+from itertools import cycle, islice
 
 
 def train_model(X_train, y_train, X_test, y_test):
@@ -109,22 +108,6 @@ def add_gaussian_noise(signal):
     noise = np.random.normal(0, 0.05, 186)
     return signal+noise
 
-def plot_hist(class_num, min_val = 5, size = 70, title=''):
-    img = train_df_new.loc[train_df_new[187]==class_num].values
-    img = img[:, min_val: size]
-    img_flatten = img.flatten()
-
-    final1 = np.arange(min_val, size)
-    for _ in range(img.shape[0]-1):
-        tempo1 = np.arange(min_val, size)
-        final1 = np.concatenate((final1, tempo1))
-    print(len(final1))
-    print(len(img_flatten))
-    plt.hist2d(final1, img_flatten, bins=(80, 80), cmap=plt.cm.jet)
-    plt.title('2D Histogram- '+title)
-
-    plt.show()
-
 train_df = pd.read_csv('mitbih_train.csv', header=None)
 test_df = pd.read_csv('mitbih_test.csv', header=None)
 
@@ -137,61 +120,41 @@ print(class_dist)
 
 print(class_dist.mean())
 
-plt.figure(figsize=(10, 7))
-p = class_dist.plot(kind='pie',
-                    labels=['N','S','V','F','Q'],
-                    autopct='%1.1f%%')
-p.add_artist(plt.Circle((0,0), 0.7, color='white'))
-plt.title('Class Distribution')
-plt.legend()
+my_colors = list(islice(cycle(['orange', 'r', 'g', 'y', 'k']), None, len(train_df)))
+
+p = train_df[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+plt.title('Class Distribution: Pre Random-Sampling')
 plt.show()
 
 #train_df_new
-df_0 = train_df[train_df[187] == 0].sample(n=20000, random_state=8)
+df_0 = train_df[train_df[187] == 0].sample(n=20000, random_state=13)
 df_1 = resample(train_df[train_df[187] == 1], n_samples=20000,replace=True,
-                                           random_state=8)
+                                           random_state=13)
 df_2 = resample(train_df[train_df[187] == 2], n_samples=20000,replace=True,
-                                           random_state=8)
+                                           random_state=13)
 df_3 = resample(train_df[train_df[187] == 3], n_samples=20000,replace=True,
-                                           random_state=8)
+                                           random_state=13)
 df_4 = resample(train_df[train_df[187] == 4], n_samples=20000,replace=True,
-                                           random_state=8)
-print(train_df[train_df[187]==4])
+                                           random_state=13)
 
 train_df_new = pd.concat([df_0, df_1, df_2, df_3, df_4])
 
-plt.figure(figsize=(10, 7))
-p = train_df_new[187].value_counts().plot(kind='pie',
-                    labels=['N','S','V','F','Q'],
-                    autopct='%1.1f%%')
-p.add_artist(plt.Circle((0,0), 0.7, color='white'))
+p = train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Post Random-Sampling')
-plt.legend()
 plt.show()
 
 c = train_df_new.groupby(187, group_keys=False)\
         .apply(lambda train_df_new: train_df_new.sample(1))
 print(c)
 
-fig, axes = plt.subplots(5, 1, figsize=(16, 11))
+fig, axes = plt.subplots(5, 1, figsize=(16, 15))
 
 leg = iter(['N', 'S', 'V', 'F', 'U'])
 colors = iter(['skyblue', 'red', 'lightgreen', 'orange', 'black'])
 for i, ax in enumerate(axes.flatten()):
     ax.plot(c.iloc[i, :186].T, color=next(colors))
     ax.legend(next(leg))
-plt.title('Sample of different heart-beat types')
 plt.show()
-
-plot_hist(0, title='Normal Heart Beat')
-
-plot_hist(1, 5, 50, title='Supraventricular ectopic beats')
-
-plot_hist(2, 30, 70, title='Ventricular ectopic beats')
-
-plot_hist(3, 20, 58, title='Fusion beats')
-
-plot_hist(4, 15, 70, title='Unknown beats')
 
 plt.figure(figsize=(14, 7))
 tempo = c.iloc[0, :186]
@@ -217,7 +180,7 @@ target_test = test_df[187]
 
 y_train = to_categorical(target_train)
 y_test = to_categorical(target_test)
-# data prepapration : Features
+# data preparation : Features
 X_train = train_df_new.iloc[:,:186].values[:,:, np.newaxis]
 X_test = test_df.iloc[:,:186].values[:,:, np.newaxis]
 

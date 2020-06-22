@@ -1,12 +1,10 @@
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
-import pywt
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from pandas import DataFrame
+import numpy as np
 
 from statistics import mean, median
+
 def find_stats(y_list, begin, end):
     temp = []
     for i in np.arange(begin, end, 1):
@@ -80,8 +78,9 @@ A = pywt.idwt(LL, None, 'db2', 'smooth')
 print(A.size)
 '''
 
-image = cv2.imread('b1_00.png')
+image = cv2.imread('a3_45.png')
 image = cv2.resize(image, (7522,750), interpolation=cv2.INTER_CUBIC)
+
 '''
 x_list, y_list = [], []
 for x in np.arange(0, 7522, 1):
@@ -93,12 +92,11 @@ show_graph(x_list, y_list, 18, 3)
 
 print(x_list)
 print(y_list)
-
 '''
 
 train_X, train_y = [], []   # initialise for features extraction
 
-position_list = locate_pos(image, (255, 0, 0)) # N
+position_list = locate_pos(image, (0, 128, 0)) # N
 count = len(position_list)
 print(count)
 for i in range(count):
@@ -106,13 +104,19 @@ for i in range(count):
             position_list[i]-70, position_list[i]+90))
     train_y.append(1)
 
-df = DataFrame(train_X)
+for i in range(0,len(train_X)):
+    train_new = np.reshape(train_X[i], (188, 1))
 
-print(df)
+    scaler = MinMaxScaler(feature_range=(0, 1))
 
-scaler = MinMaxScaler(feature_range=(0,1))
+    train_new1 = scaler.fit_transform(train_new)
 
-print(df.max)
+    print(np.reshape(train_new1, (1, 188)))
+
+
+
+
+
 
 
 
