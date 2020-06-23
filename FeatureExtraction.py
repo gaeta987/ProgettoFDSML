@@ -78,7 +78,7 @@ A = pywt.idwt(LL, None, 'db2', 'smooth')
 print(A.size)
 '''
 
-image = cv2.imread('a3_45.png')
+image = cv2.imread('b1_00.png')
 image = cv2.resize(image, (7522,750), interpolation=cv2.INTER_CUBIC)
 
 '''
@@ -94,9 +94,10 @@ print(x_list)
 print(y_list)
 '''
 
+
 train_X, train_y = [], []   # initialise for features extraction
 
-position_list = locate_pos(image, (0, 128, 0)) # N
+position_list = locate_pos(image, (255, 0, 0))
 count = len(position_list)
 print(count)
 for i in range(count):
