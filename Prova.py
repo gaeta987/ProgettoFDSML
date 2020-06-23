@@ -12,7 +12,6 @@ from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from itertools import cycle, islice
 
-
 def train_model(X_train, y_train, X_test, y_test):
     # input signal image shape
     im_shape = (X_train.shape[1], 1)
