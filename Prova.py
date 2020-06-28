@@ -61,7 +61,7 @@ def train_model(X_train, y_train, X_test, y_test):
                   metrics=['accuracy'])
 
     callbacks = [EarlyStopping(monitor='val_loss', patience=8),
-                 ModelCheckpoint(filepath='best_model.h5',
+                 ModelCheckpoint(filepath='best-model.h5',
                                  monitor='val_loss',
                                  save_best_only=True)]
     # training
