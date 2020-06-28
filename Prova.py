@@ -11,6 +11,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from itertools import cycle, islice
+from sklearn.model_selection import train_test_split
+
 
 def train_model(X_train, y_train, X_test, y_test):
     # input signal image shape
@@ -68,7 +70,12 @@ def train_model(X_train, y_train, X_test, y_test):
                         validation_data=(X_test, y_test),
                         callbacks=callbacks)
 
-    model.load_weights('best_model.h5')
+    model_json = model.to_json()
+    with open("best_model.json", "w") as json_file:
+        json_file.write(model_json)
+
+    model.save_weights("best-model.h5")
+    print("Saved model to disk")
 
     return (model, history)
 
@@ -107,8 +114,47 @@ def add_gaussian_noise(signal):
     noise = np.random.normal(0, 0.05, 186)
     return signal+noise
 
+def dsGaussian(train):
+    train_new = pd.DataFrame()
+    for i in range(len(train)):
+        tempo = train.iloc[i, :186]
+        bruiter = add_gaussian_noise(tempo)
+
+        plt.figure(figsize=(14, 7))
+
+        # tempo
+        plt.subplot(5, 1, 1)
+        plt.plot(bruiter)
+
+        plt.title('ECG: AFTER Gaussion noise additon')
+
+        for j in range(len(bruiter)):
+            if bruiter[j] < 0:
+                bruiter[j] = bruiter[j] * -1
+        print(bruiter)
+
+        # tempo
+        plt.subplot(5, 1, 3)
+        plt.plot(tempo)
+
+        plt.title('ECG: BEFORE Gaussion noise additon')
+
+        # bruiter
+        plt.subplot(5, 1, 5)
+        plt.plot(bruiter)
+
+        plt.title('ECG: AFTER Gaussion noise additon and AFTER Normalization')
+
+        plt.show()
+
+        train_new.append(bruiter)
+
+    print(train_new)
+
 train_df = pd.read_csv('mitbih_train.csv', header=None)
-test_df = pd.read_csv('mitbih_test.csv', header=None)
+#test_df = pd.read_csv('mitbih_test.csv', header=None)
+
+#dsGaussian(train_df)
 
 print(train_df.head())
 
@@ -159,6 +205,11 @@ plt.figure(figsize=(14, 7))
 tempo = c.iloc[0, :186]
 bruiter = add_gaussian_noise(tempo)
 
+'''for i in range(len(bruiter)):
+    if bruiter[i] < 0:
+        bruiter[i] = bruiter[i] * -1
+print(bruiter)'''
+
 # tempo
 plt.subplot(2,1,1)
 plt.plot(tempo)
@@ -175,13 +226,14 @@ plt.show()
 
 # data prepapration : Labels
 target_train = train_df_new[187]
-target_test = test_df[187]
 
+#target_test = test_df[187]
 y_train = to_categorical(target_train)
-y_test = to_categorical(target_test)
+
 # data preparation : Features
 X_train = train_df_new.iloc[:,:186].values[:,:, np.newaxis]
-X_test = test_df.iloc[:,:186].values[:,:, np.newaxis]
+
+X_train, X_test, y_train, y_test = train_test_split(X_train,y_train, test_size = 0.2, random_state = 42)
 
 model, history = train_model(X_train, y_train, X_test, y_test)
 
@@ -200,4 +252,7 @@ print(conf_matrix)
 plt.figure(figsize=(10, 7))
 sns.heatmap(np.corrcoef(conf_matrix))
 plt.title('Confusion Matrix Corrleation-Coefficient')
+plt.show()
+
+
 
