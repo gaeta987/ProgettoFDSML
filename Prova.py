@@ -48,7 +48,7 @@ def train_model(X_train, y_train, X_test, y_test):
     # Flatten
     flatten = Flatten()(pool3)
 
-    # Dense Block
+    # Dense Block (Fully Connected layer)
     dense1 = Dense(64, activation='relu')(flatten)
     dense2 = Dense(32, activation='relu')(dense1)
 
@@ -111,7 +111,7 @@ def evaluate_model(history, X_test, y_test, model):
     cnf_matrix = confusion_matrix(y_true, prediction)
 
 def add_gaussian_noise(signal):
-    noise = np.random.normal(0, 0.05, 186)
+    noise = np.random.normal(loc=0, scale=0.03, size=186)
     return signal+noise
 
 def dsGaussian(train):
@@ -124,9 +124,10 @@ def dsGaussian(train):
 
         # tempo
         plt.subplot(5, 1, 1)
-        plt.plot(bruiter)
+        plt.plot(tempo)
 
-        plt.title('ECG: AFTER Gaussion noise additon')
+        plt.title('ECG: BEFORE Gaussion noise additon')
+
 
         for j in range(len(bruiter)):
             if bruiter[j] < 0:
@@ -135,9 +136,9 @@ def dsGaussian(train):
 
         # tempo
         plt.subplot(5, 1, 3)
-        plt.plot(tempo)
+        plt.plot(bruiter)
 
-        plt.title('ECG: BEFORE Gaussion noise additon')
+        plt.title('ECG: AFTER Gaussion noise additon')
 
         # bruiter
         plt.subplot(5, 1, 5)
@@ -184,7 +185,7 @@ df_4 = resample(train_df[train_df[187] == 4], n_samples=20000,replace=True,
 
 train_df_new = pd.concat([df_0, df_1, df_2, df_3, df_4])
 
-p = train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Post Random-Sampling')
 plt.show()
 

@@ -12,6 +12,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from itertools import cycle, islice
 import time
+from sklearn.model_selection import train_test_split
 
 def train_model(X_train, y_train, X_test, y_test):
     # input signal image shape
@@ -108,20 +109,18 @@ def add_gaussian_noise(signal):
     noise = np.random.normal(0, 0.05, 179)
     return signal+noise
 
-
-
 train_df = pd.read_csv('mitbih_train.csv', header=None)
-test_df = pd.read_csv('mitbih_test.csv', header=None)
+#test_df = pd.read_csv('mitbih_test.csv', header=None)
 
 print(train_df.head())
 
 print(train_df.info())
 
-train_df = train_df.drop([1,4,5,6,8,9,10],axis=1)
-train_df.columns = range(train_df.shape[1])
+#train_df = train_df.drop([1,4,5,6,8,9,10],axis=1)
+#train_df.columns = range(train_df.shape[1])
 
-test_df = test_df.drop([1,4,5,6,8,9,10],axis=1)
-test_df.columns = range(test_df.shape[1])
+#test_df = test_df.drop([1,4,5,6,8,9,10],axis=1)
+#test_df.columns = range(test_df.shape[1])
 
 class_dist = train_df[180].astype(int).value_counts()
 print(class_dist)
@@ -146,6 +145,9 @@ df_4 = resample(train_df[train_df[180] == 4], n_samples=20000,replace=True,
                                            random_state=13)
 
 train_df_new = pd.concat([df_0, df_1, df_2, df_3, df_4])
+
+train_df = train_df_new.drop([1,4,5,6,8,9,10],axis=1)
+train_df.columns = range(train_df.shape[1])
 
 p = train_df_new[180].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Post Random-Sampling')
@@ -187,14 +189,15 @@ target_train = train_df_new[180]
 target_test = test_df[180]
 
 y_train = to_categorical(target_train)
-y_test = to_categorical(target_test)
+#y_test = to_categorical(target_test)
 # data preparation : Features
 X_train = train_df_new.iloc[:,:179].values[:,:, np.newaxis]
-X_test = test_df.iloc[:,:179].values[:,:, np.newaxis]
+#X_test = test_df.iloc[:,:179].values[:,:, np.newaxis]
 
 #start to pick timing
 start_time = time.time()
 
+X_train, X_test, y_train, y_test = train_test_split(X_train,y_train, test_size = 0.2, random_state = 42)
 
 model, history = train_model(X_train, y_train, X_test, y_test)
 
