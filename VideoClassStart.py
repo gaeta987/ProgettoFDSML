@@ -1,5 +1,4 @@
 import sys
-import argparse
 import time
 import cv2
 from sklearn.preprocessing import MinMaxScaler
@@ -105,47 +104,49 @@ def start():
 
         if(len(peaks) != 0):
 
+            try:
+                extrac = extract_feat(image,
+                                      peaks[1] - 90, peaks[1] + 96)
 
-            extrac = extract_feat(image,
-                                  peaks[1] - 90, peaks[1] + 96)
+                json_file = open('best_model.json', 'r')
+                loaded_model_json = json_file.read()
+                json_file.close()
+                loaded_model = model_from_json(loaded_model_json)
 
-            json_file = open('best_model.json', 'r')
-            loaded_model_json = json_file.read()
-            json_file.close()
-            loaded_model = model_from_json(loaded_model_json)
+                loaded_model.load_weights("best-model.h5")
+                print("Loaded model from disk")
 
-            loaded_model.load_weights("best-model.h5")
-            print("Loaded model from disk")
+                loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-            loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+                train_new = np.reshape(extrac, (186, 1))
 
-            train_new = np.reshape(extrac, (186, 1))
+                scaler = MinMaxScaler(feature_range=(0, 1))
 
-            scaler = MinMaxScaler(feature_range=(0, 1))
+                train_new1 = scaler.fit_transform(train_new)
 
-            train_new1 = scaler.fit_transform(train_new)
+                p = np.reshape(train_new1, (1, 186))
 
-            p = np.reshape(train_new1, (1, 186))
+                predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
 
-            predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
+                if str(np.argmax(predictions, axis=1)[0]) == '0':
+                    output = 'N'
+                elif str(np.argmax(predictions, axis=1)[0]) == '1':
+                    output = 'S'
+                elif str(np.argmax(predictions, axis=1)[0]) == '2':
+                    output = 'V'
+                elif str(np.argmax(predictions, axis=1)[0]) == '3':
+                    output = 'F'
+                elif str(np.argmax(predictions, axis=1)[0]) == '4':
+                    output = 'U'
 
-            if str(np.argmax(predictions, axis=1)[0]) == '0':
-                output = 'N'
-            elif str(np.argmax(predictions, axis=1)[0]) == '1':
-                output = 'S'
-            elif str(np.argmax(predictions, axis=1)[0]) == '2':
-                output = 'V'
-            elif str(np.argmax(predictions, axis=1)[0]) == '3':
-                output = 'F'
-            elif str(np.argmax(predictions, axis=1)[0]) == '4':
-                output = 'U'
+                cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
+                cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
+                            (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
 
-            cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
-            cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
-                        (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            except IndexError:
+                print('immagine non posizionata correttamente')
 
         cv2.imshow('frame', imgForText)
         ret_val, orig_image = cam.read()
