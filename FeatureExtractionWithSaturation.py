@@ -38,8 +38,10 @@ for i in range(len(list)):
 
     img = cv2.imread(path)
 
-    cv2.imshow('initial image', cv2.resize(img, (700, 700), interpolation=cv2.INTER_CUBIC))
-    cv2.waitKey()
+    imgForText = cv2.resize(img, (700,700), interpolation=cv2.INTER_CUBIC)
+
+    #cv2.imshow('initial image', cv2.resize(img, (700, 700), interpolation=cv2.INTER_CUBIC))
+    #cv2.waitKey()
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype("float32")
 
@@ -70,6 +72,9 @@ for i in range(len(list)):
 
     print(peaks)
 
+    print(y_list[peaks[0]])
+    print(x_list[peaks[0]])
+
     extrac = extract_feat(image,
                     peaks[1]-90, peaks[1]+96)
 
@@ -93,6 +98,24 @@ for i in range(len(list)):
 
     predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
 
-    print(np.argmax(predictions, axis=1))
-    plt.plot(np.reshape(p, (186, 1)))
-    plt.show()
+    print(np.argmax(predictions, axis=1)[0])
+    #plt.plot(np.reshape(p, (186, 1)))
+    #plt.show()
+
+    if str(np.argmax(predictions, axis=1)[0]) == '0':
+        output = 'N'
+    elif str(np.argmax(predictions, axis=1)[0]) == '1':
+        output = 'S'
+    elif str(np.argmax(predictions, axis=1)[0]) == '2':
+        output = 'V'
+    elif str(np.argmax(predictions, axis=1)[0]) == '3':
+        output = 'F'
+    elif str(np.argmax(predictions, axis=1)[0]) == '4':
+        output = 'U'
+
+    print(predictions[0][np.argmax(predictions, axis=1)[0]])
+
+    cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
+    cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]],2)), (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
+    cv2.imshow('image with classification', imgForText)
+    cv2.waitKey()

@@ -110,52 +110,7 @@ def evaluate_model(history, X_test, y_test, model):
     prediction = np.argmax(prediction_proba, axis=1)
     cnf_matrix = confusion_matrix(y_true, prediction)
 
-def add_gaussian_noise(signal):
-    noise = np.random.normal(loc=0, scale=0.03, size=186)
-    return signal+noise
-
-def dsGaussian(train):
-    train_new = pd.DataFrame()
-    for i in range(len(train)):
-        tempo = train.iloc[i, :186]
-        bruiter = add_gaussian_noise(tempo)
-
-        plt.figure(figsize=(14, 7))
-
-        # tempo
-        plt.subplot(5, 1, 1)
-        plt.plot(tempo)
-
-        plt.title('ECG: BEFORE Gaussion noise additon')
-
-
-        for j in range(len(bruiter)):
-            if bruiter[j] < 0:
-                bruiter[j] = bruiter[j] * -1
-        print(bruiter)
-
-        # tempo
-        plt.subplot(5, 1, 3)
-        plt.plot(bruiter)
-
-        plt.title('ECG: AFTER Gaussion noise additon')
-
-        # bruiter
-        plt.subplot(5, 1, 5)
-        plt.plot(bruiter)
-
-        plt.title('ECG: AFTER Gaussion noise additon and AFTER Normalization')
-
-        plt.show()
-
-        train_new.append(bruiter)
-
-    print(train_new)
-
 train_df = pd.read_csv('mitbih_train.csv', header=None)
-#test_df = pd.read_csv('mitbih_test.csv', header=None)
-
-#dsGaussian(train_df)
 
 print(train_df.head())
 
@@ -229,12 +184,11 @@ print('After columns reduction')
 print(train_df_new.head())
 print(train_df_new.info())
 
-
-train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+train_df_new[55].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Post Random-Sampling')
 plt.show()
 
-c = train_df_new.groupby(187, group_keys=False)\
+c = train_df_new.groupby(55, group_keys=False)\
         .apply(lambda train_df_new: train_df_new.sample(1))
 print(c)
 
@@ -243,42 +197,18 @@ fig, axes = plt.subplots(5, 1, figsize=(16, 15))
 leg = iter(['N', 'S', 'V', 'F', 'U'])
 colors = iter(['skyblue', 'red', 'lightgreen', 'orange', 'black'])
 for i, ax in enumerate(axes.flatten()):
-    ax.plot(c.iloc[i, :186].T, color=next(colors))
+    ax.plot(c.iloc[i, :54].T, color=next(colors))
     ax.legend(next(leg))
 plt.show()
 
-plt.figure(figsize=(14, 7))
-tempo = c.iloc[0, :186]
-bruiter = add_gaussian_noise(tempo)
-
-'''
-for i in range(len(bruiter)):
-    if bruiter[i] < 0:
-        bruiter[i] = bruiter[i] * -1
-print(bruiter)'''
-
-# tempo
-plt.subplot(2,1,1)
-plt.plot(tempo)
-
-plt.title('ECG: BEFORE Gaussion noise additon')
-
-#bruiter
-plt.subplot(2,1,2)
-plt.plot(bruiter)
-
-plt.title('ECG: AFTER Gaussion noise additon')
-
-plt.show()
-
 # data prepapration : Labels
-target_train = train_df_new[187]
+target_train = train_df_new[55]
 
 #target_test = test_df[187]
 y_train = to_categorical(target_train)
 
 # data preparation : Features
-X_train = train_df_new.iloc[:,:186].values[:,:, np.newaxis]
+X_train = train_df_new.iloc[:,:54].values[:,:, np.newaxis]
 
 X_train, X_test, y_train, y_test = train_test_split(X_train,y_train, test_size = 0.2, random_state = 42)
 

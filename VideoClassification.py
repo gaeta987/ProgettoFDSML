@@ -1,13 +1,12 @@
-import os
 import sys
 import argparse
 import time
 import cv2
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-
-from statistics import mean, median
+from keras.engine.saving import model_from_json
+import scipy.signal
+import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -17,52 +16,21 @@ start_datetime = time.strftime("-%m-%d-%H-%M-%S", currentDT)
 def crop(image, w, f):
     return image[:, int(w * f): int(w * (1 - f))]
 
-def find_stats(y_list, begin, end):
-    temp = []
-    for i in np.arange(begin, end, 1):
-        temp.append(y_list[i])
-    return [min(temp), mean(temp), median(temp), max(temp)]
-
 def extract_feat(image, begin, end):
     x_list, y_list = [], [0]   # boundary padding add '0'
     for x in np.arange(begin, end, 1):
         x_list.append(x-begin)
-        for y in np.arange(0, 750, 1):
-            if np.all(image[y][x] == (0, 0, 0)):
-                y_list.append(750-y)
+        for y in np.arange(0, 700, 1):
+            #if np.all(image[y][x] == (0, 0, 0)):
+            if np.all(image[y][x] == (255, 255, 255)):
+                y_list.append(700-y)
                 break
-            if y==749:
+            if y==699:
                 y_list.append(y_list[x-begin])
     y_list.pop(0)   # remove boundary padding '0'
-    show_graph(x_list, y_list, 2, 2)
-    y_list.extend(find_stats(y_list, 0, 40))  # quardrant 1
-    y_list.extend(find_stats(y_list, 40, 80))  # quardrant 2
-    y_list.extend(find_stats(y_list, 80, 120))  # quardrant 3
-    y_list.extend(find_stats(y_list, 120, 160))  # quardrant 4
-    y_list.extend(find_stats(y_list, 0, 80))  # segment 1
-    y_list.extend(find_stats(y_list, 40, 120))  # segment 2
-    y_list.extend(find_stats(y_list, 80, 160))  # segment 3
-    print(len(y_list))
+    #show_graph(x_list, y_list, 5, 5)
+
     return y_list
-
-def locate_pos(image, color):
-    position_list = []
-    y_level = 42
-    while len(position_list) == 0 and y_level < 100:
-        x=100
-        while x<700:
-            if np.all(image[y_level][x] == color):
-                position_list.append(x)
-                x += 25
-            x += 1
-        y_level+=2
-    return position_list
-
-def show_graph(x_list, y_list, width, height):
-    plt.figure(figsize = [width, height])
-    plt.scatter(x_list, y_list, marker='.', s=5)
-    plt.show()
-    return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -123,32 +91,74 @@ if __name__ == '__main__':
 
         canvas = cv2.resize(input_image, (0, 0), fx=4, fy=2, interpolation=cv2.INTER_CUBIC)
 
-        cv2.imshow('frame', canvas)
+        imgForText = cv2.resize(canvas, (700, 700), interpolation=cv2.INTER_CUBIC)
 
-        train_X, train_y = [], []  # initialise for features extraction
+        img = cv2.cvtColor(canvas, cv2.COLOR_BGR2HSV).astype("float32")
 
-        image = cv2.resize(input_image, (7522, 750), interpolation=cv2.INTER_CUBIC)
+        (h, s, v) = cv2.split(img)
+        s = s * 0
+        s = np.clip(s, 0, 255)
+        img = cv2.merge([h, s, v])
 
-        position_list = locate_pos(image, (255, 0, 0))  # N
-        count = len(position_list)
-        print(count)
-        for i in range(count):
-            train_X.append(extract_feat(image,
-                                        position_list[i] - 70, position_list[i] + 90))
-            train_y.append(1)
+        img = cv2.cvtColor(img.astype("uint8"), cv2.COLOR_HSV2BGR)
 
-        for i in range(0, len(train_X)):
-            train_new = np.reshape(train_X[i], (188, 1))
+        image = cv2.resize(img, (700, 700), interpolation=cv2.INTER_CUBIC)
+
+        x_list, y_list = [], []
+        for x in np.arange(0, 700, 1):
+            for y in np.arange(0, 700, 1):
+                # if np.all(image[y][x] == (0, 0, 0)):
+                if np.all(image[y][x] == (255, 255, 255)):
+                    x_list.append(x)
+                    y_list.append(700 - y)
+
+        peaks, _ = scipy.signal.find_peaks(y_list, height=400)
+
+        if(len(peaks) != 0):
+
+
+            extrac = extract_feat(image,
+                                  peaks[1] - 90, peaks[1] + 96)
+
+            json_file = open('best_model.json', 'r')
+            loaded_model_json = json_file.read()
+            json_file.close()
+            loaded_model = model_from_json(loaded_model_json)
+
+            loaded_model.load_weights("best-model.h5")
+            print("Loaded model from disk")
+
+            loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+            train_new = np.reshape(extrac, (186, 1))
 
             scaler = MinMaxScaler(feature_range=(0, 1))
 
             train_new1 = scaler.fit_transform(train_new)
 
-            print(np.reshape(train_new1, (1, 188)))
+            p = np.reshape(train_new1, (1, 186))
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
 
+            if str(np.argmax(predictions, axis=1)[0]) == '0':
+                output = 'N'
+            elif str(np.argmax(predictions, axis=1)[0]) == '1':
+                output = 'S'
+            elif str(np.argmax(predictions, axis=1)[0]) == '2':
+                output = 'V'
+            elif str(np.argmax(predictions, axis=1)[0]) == '3':
+                output = 'F'
+            elif str(np.argmax(predictions, axis=1)[0]) == '4':
+                output = 'U'
+
+            cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
+            cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
+                        (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cv2.imshow('frame', imgForText)
         ret_val, orig_image = cam.read()
 
         i += 1
