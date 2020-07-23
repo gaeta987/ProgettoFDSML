@@ -144,3 +144,20 @@ Eseguire lo script tramite la console di Python.
 ```bash
 python VideoClassification.py
 ```
+##### Procedura di esecuzione script tramite console di Python:
+Per eseguire i diversi script, è possibile utilizzare lo script main.py nel seguente modo:
+
+Per etichettare un'immagine data in input:
+```bash
+python main.py 0 <image_path>
+```
+
+Per etichettare un segnale in real-time:
+```bash
+python main.py 1
+```
+
+Per etichettare un video dato in input:
+```bash
+python main.py 2 <video_path>
+```
