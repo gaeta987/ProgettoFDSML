@@ -1,4 +1,5 @@
 import sys
+import argparse
 import time
 import cv2
 from sklearn.preprocessing import MinMaxScaler
@@ -16,7 +17,7 @@ def crop(image, w, f):
     return image[:, int(w * f): int(w * (1 - f))]
 
 def extract_feat(image, begin, end):
-    x_list, y_list = [], [0]   # boundary padding add '0'
+    x_list, y_list = [], [0]
     for x in np.arange(begin, end, 1):
         x_list.append(x-begin)
         for y in np.arange(0, 700, 1):
@@ -26,8 +27,7 @@ def extract_feat(image, begin, end):
                 break
             if y==699:
                 y_list.append(y_list[x-begin])
-    y_list.pop(0)   # remove boundary padding '0'
-    #show_graph(x_list, y_list, 5, 5)
+    y_list.pop(0)
 
     return y_list
 
@@ -52,7 +52,6 @@ def start():
 
     i = 0  # default is 0
     resize_fac = 1
-    # while(cam.isOpened()) and ret_val is True:
 
     while True:
 
@@ -105,8 +104,7 @@ def start():
         if(len(peaks) != 0):
 
             try:
-                extrac = extract_feat(image,
-                                      peaks[1] - 90, peaks[1] + 96)
+                extrac = extract_feat(image,peaks[0] - 90, peaks[0] + 96)
 
                 json_file = open('best_model.json', 'r')
                 loaded_model_json = json_file.read()

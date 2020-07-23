@@ -4,6 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.utils import resample
 from keras.utils.np_utils import to_categorical
 from keras.layers import Convolution1D, MaxPool1D, Dense, Input, Flatten
@@ -11,8 +13,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from itertools import cycle, islice
-import time
 from sklearn.model_selection import train_test_split
+
 
 def train_model(X_train, y_train, X_test, y_test):
     # input signal image shape
@@ -48,7 +50,7 @@ def train_model(X_train, y_train, X_test, y_test):
     # Flatten
     flatten = Flatten()(pool3)
 
-    # Dense Block
+    # Dense Block (Fully Connected layer)
     dense1 = Dense(64, activation='relu')(flatten)
     dense2 = Dense(32, activation='relu')(dense1)
 
@@ -70,7 +72,12 @@ def train_model(X_train, y_train, X_test, y_test):
                         validation_data=(X_test, y_test),
                         callbacks=callbacks)
 
-    model.load_weights('best-model.h5')
+    model_json = model.to_json()
+    with open("best_model.json", "w") as json_file:
+        json_file.write(model_json)
+
+    model.save_weights("best-model.h5")
+    print("Saved model to disk")
 
     return (model, history)
 
@@ -105,55 +112,88 @@ def evaluate_model(history, X_test, y_test, model):
     prediction = np.argmax(prediction_proba, axis=1)
     cnf_matrix = confusion_matrix(y_true, prediction)
 
-def add_gaussian_noise(signal):
-    noise = np.random.normal(0, 0.05, 179)
-    return signal+noise
-
 train_df = pd.read_csv('mitbih_train.csv', header=None)
-#test_df = pd.read_csv('mitbih_test.csv', header=None)
 
 print(train_df.head())
 
 print(train_df.info())
 
-#train_df = train_df.drop([1,4,5,6,8,9,10],axis=1)
-#train_df.columns = range(train_df.shape[1])
-
-#test_df = test_df.drop([1,4,5,6,8,9,10],axis=1)
-#test_df.columns = range(test_df.shape[1])
-
-class_dist = train_df[180].astype(int).value_counts()
+class_dist = train_df[187].astype(int).value_counts()
 print(class_dist)
 
 print(class_dist.mean())
 
 my_colors = list(islice(cycle(['orange', 'r', 'g', 'y', 'k']), None, len(train_df)))
 
-p = train_df[180].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+p = train_df[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Pre Random-Sampling')
 plt.show()
 
 #train_df_new
-df_0 = train_df[train_df[180] == 0].sample(n=20000, random_state=13)
-df_1 = resample(train_df[train_df[180] == 1], n_samples=20000,replace=True,
+
+df_0 = train_df[train_df[187] == 0].sample(n=20000, random_state=13)
+df_1 = resample(train_df[train_df[187] == 1], n_samples=20000,replace=True,
                                            random_state=13)
-df_2 = resample(train_df[train_df[180] == 2], n_samples=20000,replace=True,
+df_2 = resample(train_df[train_df[187] == 2], n_samples=20000,replace=True,
                                            random_state=13)
-df_3 = resample(train_df[train_df[180] == 3], n_samples=20000,replace=True,
+df_3 = resample(train_df[train_df[187] == 3], n_samples=20000,replace=True,
                                            random_state=13)
-df_4 = resample(train_df[train_df[180] == 4], n_samples=20000,replace=True,
+df_4 = resample(train_df[train_df[187] == 4], n_samples=20000,replace=True,
                                            random_state=13)
 
 train_df_new = pd.concat([df_0, df_1, df_2, df_3, df_4])
 
-train_df = train_df_new.drop([1,4,5,6,8,9,10],axis=1)
-train_df.columns = range(train_df.shape[1])
+train_df_new = train_df
+print('Before columns reduction')
+print(train_df_new.head())
+print(train_df_new.info())
 
-p = train_df_new[180].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+#drop columns of FD
+
+#from 1 to 10
+train_df_new = train_df_new.drop([1,4,5,6,8,9,10],axis=1)
+#from 11 to 31
+train_df_new = train_df_new.drop([15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],axis=1)
+#from 32 to 42
+train_df_new = train_df_new.drop([33,35,36,37,38,39,41,42],axis=1)
+#from 43 to 53
+train_df_new = train_df_new.drop([45,46,47,48,49,51,53],axis=1)
+#from 54 to 64
+train_df_new = train_df_new.drop([56,57,58,59,60,62,64],axis=1)
+#from 65 to 75
+train_df_new = train_df_new.drop([66,67,69,71,72,74,75],axis=1)
+#from 76 to 86
+train_df_new = train_df_new.drop([77,78,80,82,83,85,86],axis=1)
+#from 87 to 97
+train_df_new = train_df_new.drop([89,91,93,94,95,96,97],axis=1)
+#from 98 to 108
+train_df_new = train_df_new.drop([102,103,104,105,106,107,108],axis=1)
+#from 109 to 119
+train_df_new = train_df_new.drop([111,112,113,115,116,117,118,119],axis=1)
+#from 120 to 130
+train_df_new = train_df_new.drop([123,125,126,127,128,129,130],axis=1)
+#from 131 to 141
+train_df_new = train_df_new.drop([133,134,135,136,138,139,140,141],axis=1)
+#from 142 to 152
+train_df_new = train_df_new.drop([145,146,147,148,149,150,151,152],axis=1)
+#from 153 to 163
+train_df_new = train_df_new.drop([155,156,157,159,160,161,162,163],axis=1)
+#from 164 to 174
+train_df_new = train_df_new.drop([165,167,168,169,170,171,172,173,174],axis=1)
+#from 175 to 186
+train_df_new = train_df_new.drop([176,177,178,179,181,182,183,184,185,186],axis=1)
+
+train_df_new.columns = range(train_df_new.shape[1])
+
+print('After columns reduction')
+print(train_df_new.head())
+print(train_df_new.info())
+
+train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
 plt.title('Class Distribution: Post Random-Sampling')
 plt.show()
 
-c = train_df_new.groupby(180, group_keys=False)\
+c = train_df_new.groupby(55, group_keys=False)\
         .apply(lambda train_df_new: train_df_new.sample(1))
 print(c)
 
@@ -162,40 +202,18 @@ fig, axes = plt.subplots(5, 1, figsize=(16, 15))
 leg = iter(['N', 'S', 'V', 'F', 'U'])
 colors = iter(['skyblue', 'red', 'lightgreen', 'orange', 'black'])
 for i, ax in enumerate(axes.flatten()):
-    ax.plot(c.iloc[i, :179].T, color=next(colors))
+    ax.plot(c.iloc[i, :54].T, color=next(colors))
     ax.legend(next(leg))
 plt.show()
 
-plt.figure(figsize=(14, 7))
-tempo = c.iloc[0, :179]
-bruiter = add_gaussian_noise(tempo)
-
-# tempo
-plt.subplot(2,1,1)
-plt.plot(tempo)
-
-plt.title('ECG: BEFORE Gaussion noise additon')
-
-#bruiter
-plt.subplot(2,1,2)
-plt.plot(bruiter)
-
-plt.title('ECG: AFTER Gaussion noise additon')
-
-plt.show()
-
 # data prepapration : Labels
-target_train = train_df_new[180]
-target_test = test_df[180]
+target_train = train_df_new[55]
 
+#target_test = test_df[187]
 y_train = to_categorical(target_train)
-#y_test = to_categorical(target_test)
-# data preparation : Features
-X_train = train_df_new.iloc[:,:179].values[:,:, np.newaxis]
-#X_test = test_df.iloc[:,:179].values[:,:, np.newaxis]
 
-#start to pick timing
-start_time = time.time()
+# data preparation : Features
+X_train = train_df_new.iloc[:,:54].values[:,:, np.newaxis]
 
 X_train, X_test, y_train, y_test = train_test_split(X_train,y_train, test_size = 0.2, random_state = 42)
 
@@ -210,13 +228,13 @@ for idx, i in enumerate(np.argmax(y_pred,axis=1)):
 
 print(classification_report(y_test, y_pred_clean))
 
-conf_matrix = confusion_matrix(np.argmax(y_test, axis=1), np.argmax(y_pred_clean, axis=1))
+conf_matrix = confusion_matrix(np.argmax(y_test, axis=1), np.argmax(y_pred_clean, axis=1), normalize=True)
 print(conf_matrix)
+cmn = conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis]
+df_cm = pd.DataFrame(cmn)
 
-plt.figure(figsize=(10, 7))
-sns.heatmap(np.corrcoef(conf_matrix))
+plt.figure(figsize=(10, 10))
+sns.heatmap(df_cm, annot=True)
 plt.title('Confusion Matrix Corrleation-Coefficient')
-
-#end time
-print("--- %s seconds ---" % (time.time() - start_time))
+plt.show()
 

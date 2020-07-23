@@ -8,8 +8,10 @@ from keras.engine.saving import model_from_json
 import scipy.signal
 import os
 
+#Same description as the FeatureExtractionWithSaturation.py script, but with video input
+
 def extract_feat(image, begin, end):
-    x_list, y_list = [], [0]   # boundary padding add '0'
+    x_list, y_list = [], [0]
     for x in np.arange(begin, end, 1):
         x_list.append(x-begin)
         for y in np.arange(0, 700, 1):
@@ -19,7 +21,7 @@ def extract_feat(image, begin, end):
                 break
             if y==699:
                 y_list.append(y_list[x-begin])
-    y_list.pop(0)   # remove boundary padding '0'
+    y_list.pop(0)
 
     return y_list
 
@@ -70,9 +72,6 @@ if __name__ == '__main__':
     scale_search = [1, .5, 1.5, 2]  # [.5, 1, 1.5, 2]
     scale_search = scale_search[0:process_speed]
 
-    count = 0
-    last = ''
-    prob = ''
 
     i = 0  # default is 0
     while(cam.isOpened()) and ret_val is True and i < ending_frame:
@@ -143,23 +142,11 @@ if __name__ == '__main__':
             elif str(np.argmax(predictions, axis=1)[0]) == '4':
                 output = 'U'
 
-            if count == 0:
-                last = output
-                prob = str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2))
 
-            if count == 25:
-                count = 0
-                last = output
-                prob = str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2))
-
-            count = count + 1
-
-            print(last)
-
-            cv2.putText(imgForText, last, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
-            cv2.putText(imgForText, 'prob: ' + prob,
+            cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
+            cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
                         (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
-
+            #Video saving
             out.write(imgForText)
 
             toc = time.time()
