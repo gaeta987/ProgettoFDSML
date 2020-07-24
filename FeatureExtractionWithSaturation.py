@@ -4,7 +4,6 @@ from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 from keras.engine.saving import model_from_json
 import scipy.signal
-import os
 
 #construction of the characteristics vector from the detected peak
 def extract_feat(image, begin, end):
