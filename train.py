@@ -230,7 +230,7 @@ model, history = train_model(X_train, y_train, X_test, y_test)
 #Learning curves
 evaluate_model(history, X_test, y_test, model)
 
-
+#Confusion matrix
 y_pred = model.predict(X_test)
 y_pred_clean = np.zeros_like(y_pred)
 for idx, i in enumerate(np.argmax(y_pred,axis=1)):
@@ -238,7 +238,6 @@ for idx, i in enumerate(np.argmax(y_pred,axis=1)):
 
 print(classification_report(y_test, y_pred_clean))
 
-#Confusion matrix
 conf_matrix = confusion_matrix(np.argmax(y_test, axis=1), np.argmax(y_pred_clean, axis=1), normalize=True)
 print(conf_matrix)
 cmn = conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis]
