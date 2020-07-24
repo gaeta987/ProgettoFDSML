@@ -106,8 +106,10 @@ if __name__ == '__main__':
             print('Detect peaks without any filters.')
             peaks, _ = scipy.signal.find_peaks(y_list, height=400)
 
-            extrac = extract_feat(image,
-                                  peaks[1] - 90, peaks[1] + 96)
+            try:
+                extrac = extract_feat(image,peaks[0] - 90, peaks[0] + 96)
+            except IndexError:
+                print('Picco non trovato')
 
             print(peaks[1])
 

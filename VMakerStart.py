@@ -95,7 +95,10 @@ def start(videopath):
             print('Detect peaks without any filters.')
             peaks, _ = scipy.signal.find_peaks(y_list, height=400)
 
-            extrac = extract_feat(image,peaks[0] - 90, peaks[0] + 96)
+            try:
+                extrac = extract_feat(image, peaks[0] - 90, peaks[0] + 96)
+            except IndexError:
+                print('Picco non trovato')
 
             json_file = open('best_model.json', 'r')
             loaded_model_json = json_file.read()

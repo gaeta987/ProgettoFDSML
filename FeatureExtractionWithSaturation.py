@@ -68,7 +68,10 @@ show_graph(x_list,y_list,18,3)
 peaks, _ = scipy.signal.find_peaks(y_list, height = 400)
 
 #Characteristics vector of the signal
-extrac = extract_feat(image,peaks[0]-90, peaks[0]+96)
+try:
+    extrac = extract_feat(image, peaks[0] - 90, peaks[0] + 96)
+except IndexError:
+    print('Picco non trovato')
 
 #Model reading
 json_file = open('best_model.json', 'r')

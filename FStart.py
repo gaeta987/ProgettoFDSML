@@ -63,7 +63,10 @@ def start(filepath):
     print(y_list[peaks[0]])
     print(x_list[peaks[0]])
 
-    extrac = extract_feat(image,peaks[0]-90, peaks[0]+96)
+    try:
+        extrac = extract_feat(image, peaks[0] - 90, peaks[0] + 96)
+    except IndexError:
+        print('Picco non trovato')
 
     json_file = open('best_model.json', 'r')
     loaded_model_json = json_file.read()
