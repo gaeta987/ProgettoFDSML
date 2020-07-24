@@ -140,7 +140,7 @@ python VideoMaker.py
 ```
 ---
 ##### Procedura di feature extraction e classification in real-time:
-Viene utilizzata la stessa procedura sopra descritta, ma con l'integrazione real-time
+Viene utilizzata la stessa procedura sopra descritta, ma con l'integrazione in real-time
 Eseguire lo script tramite la console di Python.
 ```bash
 python VideoClassification.py
