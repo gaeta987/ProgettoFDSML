@@ -4,8 +4,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import plot_confusion_matrix
-from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.utils import resample
 from keras.utils.np_utils import to_categorical
 from keras.layers import Convolution1D, MaxPool1D, Dense, Input, Flatten
@@ -112,10 +110,10 @@ def evaluate_model(history, X_test, y_test, model):
     prediction = np.argmax(prediction_proba, axis=1)
     cnf_matrix = confusion_matrix(y_true, prediction)
 
+#Read the dataset from csv file through Pandas library
 train_df = pd.read_csv('mitbih_train.csv', header=None)
 
 print(train_df.head())
-
 print(train_df.info())
 
 class_dist = train_df[187].astype(int).value_counts()
@@ -125,13 +123,16 @@ print(class_dist.mean())
 
 my_colors = list(islice(cycle(['orange', 'r', 'g', 'y', 'k']), None, len(train_df)))
 
+#Distribution of each class before re-sampling
 p = train_df[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
-plt.title('Class Distribution: Pre Random-Sampling')
+plt.title('Class Distribution: Before re-sampling')
 plt.show()
 
-#train_df_new
+#Re-sampling
 
+#Under-sampling
 df_0 = train_df[train_df[187] == 0].sample(n=20000, random_state=13)
+#Over-sampling
 df_1 = resample(train_df[train_df[187] == 1], n_samples=20000,replace=True,
                                            random_state=13)
 df_2 = resample(train_df[train_df[187] == 2], n_samples=20000,replace=True,
@@ -140,15 +141,15 @@ df_3 = resample(train_df[train_df[187] == 3], n_samples=20000,replace=True,
                                            random_state=13)
 df_4 = resample(train_df[train_df[187] == 4], n_samples=20000,replace=True,
                                            random_state=13)
-
+#New dataset after re-sampling
 train_df_new = pd.concat([df_0, df_1, df_2, df_3, df_4])
 
-train_df_new = train_df
+
 print('Before columns reduction')
 print(train_df_new.head())
 print(train_df_new.info())
 
-#drop columns of FD
+#Feature selection using functional dependencies discovered on dataset
 
 #from 1 to 10
 train_df_new = train_df_new.drop([1,4,5,6,8,9,10],axis=1)
@@ -183,16 +184,19 @@ train_df_new = train_df_new.drop([165,167,168,169,170,171,172,173,174],axis=1)
 #from 175 to 186
 train_df_new = train_df_new.drop([176,177,178,179,181,182,183,184,185,186],axis=1)
 
+#Reshaping of dataset for fixing indexes
 train_df_new.columns = range(train_df_new.shape[1])
 
 print('After columns reduction')
 print(train_df_new.head())
 print(train_df_new.info())
 
-train_df_new[187].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
-plt.title('Class Distribution: Post Random-Sampling')
+#Distribution of each class after re-sampling
+train_df_new[55].astype(int).value_counts().plot(kind='bar', title='Count (target)', color=my_colors);
+plt.title('Class Distribution: After re-sampling')
 plt.show()
 
+#An example for each class
 c = train_df_new.groupby(55, group_keys=False)\
         .apply(lambda train_df_new: train_df_new.sample(1))
 print(c)
@@ -206,19 +210,22 @@ for i, ax in enumerate(axes.flatten()):
     ax.legend(next(leg))
 plt.show()
 
-# data prepapration : Labels
+# data preparation : Labels
 target_train = train_df_new[55]
 
-#target_test = test_df[187]
+#Converts a class vector (integers) to binary class matrix
 y_train = to_categorical(target_train)
 
 # data preparation : Features
 X_train = train_df_new.iloc[:,:54].values[:,:, np.newaxis]
 
+#Splitting of dataset into test_set(80%) and testing_set(20%)
 X_train, X_test, y_train, y_test = train_test_split(X_train,y_train, test_size = 0.2, random_state = 42)
 
+#Training of model
 model, history = train_model(X_train, y_train, X_test, y_test)
 
+#Learning curves
 evaluate_model(history, X_test, y_test, model)
 y_pred = model.predict(X_test)
 
@@ -228,6 +235,7 @@ for idx, i in enumerate(np.argmax(y_pred,axis=1)):
 
 print(classification_report(y_test, y_pred_clean))
 
+#Confusion matrix
 conf_matrix = confusion_matrix(np.argmax(y_test, axis=1), np.argmax(y_pred_clean, axis=1), normalize=True)
 print(conf_matrix)
 cmn = conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis]
@@ -235,6 +243,6 @@ df_cm = pd.DataFrame(cmn)
 
 plt.figure(figsize=(10, 10))
 sns.heatmap(df_cm, annot=True)
-plt.title('Confusion Matrix Corrleation-Coefficient')
+plt.title('Confusion Matrix Correlation-Coefficient')
 plt.show()
 

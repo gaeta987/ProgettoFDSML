@@ -22,6 +22,7 @@ pip install h5py
 pip install cycler
 pip install Pillow
 ```
+Nota : la versione delle librerie è indicata nel file requirements.txt
 
 ---
 ##### Procedura d'esecuzione dell'addestramento del modello: 
