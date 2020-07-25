@@ -1,5 +1,4 @@
 import sys
-import argparse
 import time
 import cv2
 from sklearn.preprocessing import MinMaxScaler
@@ -61,6 +60,7 @@ def start(videopath):
     scale_search = [1, .5, 1.5, 2]  # [.5, 1, 1.5, 2]
     scale_search = scale_search[0:process_speed]
 
+    bool = False
 
     i = 0  # default is 0
     while(cam.isOpened()) and ret_val is True and i < ending_frame:
@@ -95,50 +95,54 @@ def start(videopath):
             print('Detect peaks without any filters.')
             peaks, _ = scipy.signal.find_peaks(y_list, height=400)
 
-            try:
-                extrac = extract_feat(image, peaks[0] - 90, peaks[0] + 96)
-            except IndexError:
-                print('Picco non trovato')
+            if len(peaks) != 0:
+                try:
+                    extrac = extract_feat(image, peaks[0] - 90, peaks[0] + 96)
+                    bool = True
+                except IndexError:
+                    print('Picco non trovato')
 
-            json_file = open('best_model.json', 'r')
-            loaded_model_json = json_file.read()
-            json_file.close()
-            loaded_model = model_from_json(loaded_model_json)
+                if bool:
+                    json_file = open('best_model.json', 'r')
+                    loaded_model_json = json_file.read()
+                    json_file.close()
+                    loaded_model = model_from_json(loaded_model_json)
 
-            loaded_model.load_weights("best-model.h5")
-            print("Loaded model from disk")
+                    loaded_model.load_weights("best-model.h5")
+                    print("Loaded model from disk")
 
-            loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+                    loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-            train_new = np.reshape(extrac, (186, 1))
+                    train_new = np.reshape(extrac, (186, 1))
 
-            scaler = MinMaxScaler(feature_range=(0, 1))
+                    scaler = MinMaxScaler(feature_range=(0, 1))
 
-            train_new1 = scaler.fit_transform(train_new)
+                    train_new1 = scaler.fit_transform(train_new)
 
-            p = np.reshape(train_new1, (1, 186))
+                    p = np.reshape(train_new1, (1, 186))
 
-            predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
+                    predictions = loaded_model.predict(np.reshape(p, (1, 186, 1)))
 
-            if str(np.argmax(predictions, axis=1)[0]) == '0':
-                output = 'N'
-            elif str(np.argmax(predictions, axis=1)[0]) == '1':
-                output = 'S'
-            elif str(np.argmax(predictions, axis=1)[0]) == '2':
-                output = 'V'
-            elif str(np.argmax(predictions, axis=1)[0]) == '3':
-                output = 'F'
-            elif str(np.argmax(predictions, axis=1)[0]) == '4':
-                output = 'U'
+                    if str(np.argmax(predictions, axis=1)[0]) == '0':
+                        output = 'N'
+                    elif str(np.argmax(predictions, axis=1)[0]) == '1':
+                        output = 'S'
+                    elif str(np.argmax(predictions, axis=1)[0]) == '2':
+                        output = 'V'
+                    elif str(np.argmax(predictions, axis=1)[0]) == '3':
+                        output = 'F'
+                    elif str(np.argmax(predictions, axis=1)[0]) == '4':
+                        output = 'U'
 
-            cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
-            cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
-                        (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
+                    cv2.putText(imgForText, output, (x_list[peaks[0]], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 0)
+                    cv2.putText(imgForText, 'prob: ' + str(round(predictions[0][np.argmax(predictions, axis=1)[0]], 2)),
+                                (x_list[peaks[0]], 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, 0)
+                    # Video saving
+                    out.write(imgForText)
 
-            out.write(imgForText)
-
-            toc = time.time()
-            print('processing time is %.5f' % (toc - tic))
+                    toc = time.time()
+                    print('processing time is %.5f' % (toc - tic))
+                    bool = False
 
         ret_val, orig_image = cam.read()
 

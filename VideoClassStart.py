@@ -1,5 +1,4 @@
 import sys
-import argparse
 import time
 import cv2
 from sklearn.preprocessing import MinMaxScaler
