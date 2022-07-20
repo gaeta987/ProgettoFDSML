@@ -1,5 +1,7 @@
 # ProgettoFDSML
 
+https://www.researchgate.net/profile/Vincenzo-Deufemia/publication/354267261_Visual_ECG_Analysis_in_Real-world_Scenarios/links/615ba53f49da3d5b113a05d9/Visual-ECG-Analysis-in-Real-world-Scenarios.pdf
+
 # ECG Analysis
 
 ##### Installare:
